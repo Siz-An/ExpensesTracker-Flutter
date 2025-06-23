@@ -18,119 +18,330 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Search'),
+      backgroundColor: const Color(0xFFF7F8FA),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(90),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF232526), Color(0xFF414345)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(width: 10),
+                  const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 32),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Search',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 24,
+                        letterSpacing: 1.2,
+                        shadows: const [
+                          Shadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 12),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            const SizedBox(height: 18),
+            Text(
               "Search Using Date and Type",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 22,
+                color: const Color(0xFF232526),
+                letterSpacing: 1.1,
+              ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                // Start Date Selector
-                ElevatedButton(
-                  onPressed: () => _selectStartDate(context),
-                  child: Text(
-                    _startDate == null
-                        ? 'Select Start Date'
-                        : 'Start: ${_formatDate(_startDate!)}',
-                  ),
-                ),
-                // End Date Selector
-                ElevatedButton(
-                  onPressed: () => _selectEndDate(context),
-                  child: Text(
-                    _endDate == null
-                        ? 'Select End Date'
-                        : 'End: ${_formatDate(_endDate!)}',
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Dropdown for selecting type
-            DropdownButton<String>(
-              value: _selectedType,
-              items: ["Income", "Expenses"]
-                  .map((type) => DropdownMenuItem(
-                value: type,
-                child: Text(type),
-              ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedType = value!;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _searchEntries,
-              child: const Text('Search'),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: _filteredEntries.isEmpty
-                  ? const Center(child: Text("No results found.", style: TextStyle(fontSize: 18)))
-                  : ListView.builder(
-                itemCount: _filteredEntries.length,
-                itemBuilder: (context, index) {
-                  var entry = _filteredEntries[index];
-                  return Card(
-                    elevation: 4, // Subtle shadow for each card
-                    margin: const EdgeInsets.symmetric(vertical: 8), // Vertical margin between items
-                    shape: RoundedRectangleBorder( // Rounded corners for the card
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0), // Padding inside each card
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectStartDate(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: _startDate != null ? const Color(0xFF414345) : Colors.grey.shade300,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
                         children: [
-                          // Note Text
+                          Icon(Icons.calendar_today_rounded, color: _startDate != null ? const Color(0xFF414345) : Colors.grey, size: 22),
+                          const SizedBox(width: 10),
                           Text(
-                            entry['note'] ?? "No description", // Default text if note is empty
-                            style: const TextStyle(
-                              fontSize: 18, // Larger font size for title
-                              fontWeight: FontWeight.bold, // Bold title
-                              color: Colors.black87, // Darker color for text
-                            ),
-                          ),
-                          const SizedBox(height: 8), // Space between text
-                          // Amount Text
-                          Text(
-                            'Amount: Rs. ${entry['amount']}', // Ensure this displays correctly
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8), // Space between text
-                          // Date Text
-                          Text(
-                            'Date: ${_formatDate(entry['date'])}',
+                            _startDate == null
+                                ? 'Start Date'
+                                : _formatDate(_startDate!),
                             style: TextStyle(
-                              fontSize: 14, // Smaller font size for date
-                              color: Colors.grey[600], // Lighter color for date
+                              color: _startDate != null ? const Color(0xFF414345) : Colors.grey,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _selectEndDate(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.08),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                        border: Border.all(
+                          color: _endDate != null ? const Color(0xFF414345) : Colors.grey.shade300,
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded, color: _endDate != null ? const Color(0xFF414345) : Colors.grey, size: 22),
+                          const SizedBox(width: 10),
+                          Text(
+                            _endDate == null
+                                ? 'End Date'
+                                : _formatDate(_endDate!),
+                            style: TextStyle(
+                              color: _endDate != null ? const Color(0xFF414345) : Colors.grey,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.08),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+                border: Border.all(
+                  color: const Color(0xFF414345),
+                  width: 1.2,
+                ),
               ),
-            )
-
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedType,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Color(0xFF414345)),
+                  items: ["Income", "Expenses"]
+                      .map((type) => DropdownMenuItem(
+                            value: type,
+                            child: Text(
+                              type,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedType = value!;
+                    });
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Center(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF414345),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  elevation: 6,
+                  shadowColor: const Color(0x22000000),
+                  textStyle: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+                onPressed: _searchEntries,
+                icon: const Icon(Icons.search_rounded, size: 24),
+                label: const Text('Search'),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 350),
+                child: _filteredEntries.isEmpty
+                    ? Center(
+                        key: const ValueKey('empty'),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search_off_rounded, color: Colors.grey[400], size: 64),
+                            const SizedBox(height: 10),
+                            Text(
+                              "No results found.",
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        key: const ValueKey('results'),
+                        itemCount: _filteredEntries.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          var entry = _filteredEntries[index];
+                          return Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFFe0eafc), Color(0xFFcfdef3)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.10),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                              leading: CircleAvatar(
+                                radius: 26,
+                                backgroundColor: _selectedType == "Expenses"
+                                    ? const Color(0xFFff5858)
+                                    : const Color(0xFF43cea2),
+                                child: Icon(
+                                  _selectedType == "Expenses"
+                                      ? Icons.arrow_circle_up_rounded
+                                      : Icons.arrow_circle_down_rounded,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                              ),
+                              title: Text(
+                                entry['note'] ?? "No description",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF232526),
+                                ),
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 6.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Amount: Rs. ${entry['amount']}',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: _selectedType == "Expenses"
+                                            ? const Color(0xFFff5858)
+                                            : const Color(0xFF43cea2),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Date: ${_formatDate(entry['date'])}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ),
           ],
         ),
       ),
@@ -207,14 +418,15 @@ class _SearchScreenState extends State<SearchScreen> {
 
       String collectionName = _selectedType == 'Expenses' ? 'expenses' : 'income';
 
-      // Query the collection using the corrected date format
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
+      // To avoid Firestore composite index error, orderBy must be before where on the same field
+      Query query = FirebaseFirestore.instance
           .collection(collectionName)
           .where('userId', isEqualTo: user.uid)
+          .orderBy('date') // orderBy first
           .where('date', isGreaterThanOrEqualTo: startDateString)
-          .where('date', isLessThanOrEqualTo: endDateString)
-          .orderBy('date', descending: true)
-          .get();
+          .where('date', isLessThanOrEqualTo: endDateString);
+
+      QuerySnapshot snapshot = await query.get();
 
       print("Found ${snapshot.docs.length} documents in $collectionName");
 
@@ -224,17 +436,13 @@ class _SearchScreenState extends State<SearchScreen> {
 
       List<Map<String, dynamic>> entries = snapshot.docs.map((doc) {
         String dateString = doc['date'];
-
-        // Convert the date string to DateTime using the known format
         DateTime date = DateFormat('yyyy/MM/dd').parse(dateString);
-
         return {
           'amount': doc['amount'],
           'note': doc['note'],
-          'date': date, // Use the parsed DateTime object here
+          'date': date,
         };
       }).toList();
-
 
       setState(() {
         _filteredEntries = entries;
@@ -246,8 +454,4 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
   }
-
-
-
-
 }

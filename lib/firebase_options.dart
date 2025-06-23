@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -28,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -50,19 +41,56 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAD8iSrz9As0uacZV_3NQfpjkCzCOvMxyI',
-    appId: '1:829925318048:android:81dad695b069ba2b1d98c5',
-    messagingSenderId: '829925318048',
-    projectId: 'money-43d41',
-    storageBucket: 'money-43d41.firebasestorage.app',
+    apiKey: 'AIzaSyASmm4ttcUVVGJdQoEJQHmMxAAqYTe3BIs',
+    appId: '1:973335419103:android:6514416d6d698074acb16a',
+    messagingSenderId: '973335419103',
+    projectId: 'bookapp-73219',
+    databaseURL: 'https://bookapp-73219-default-rtdb.firebaseio.com',
+    storageBucket: 'bookapp-73219.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyA185-v01MNRQnc7tC09_JfkShpsr-ef0g',
-    appId: '1:829925318048:ios:cec854c8fd1e56c91d98c5',
-    messagingSenderId: '829925318048',
-    projectId: 'money-43d41',
-    storageBucket: 'money-43d41.firebasestorage.app',
+    apiKey: 'AIzaSyDG0Ys6EUEcnZwoTMNGuXbMzUZojJOVFNg',
+    appId: '1:973335419103:ios:267a32d9b6d5a23facb16a',
+    messagingSenderId: '973335419103',
+    projectId: 'bookapp-73219',
+    databaseURL: 'https://bookapp-73219-default-rtdb.firebaseio.com',
+    storageBucket: 'bookapp-73219.appspot.com',
+    androidClientId: '973335419103-om9h1ka65f0dpqvork25oianpuo2gl7e.apps.googleusercontent.com',
+    iosClientId: '973335419103-6jpr32824h5a45ad4ebol02j8l2675f5.apps.googleusercontent.com',
     iosBundleId: 'com.example.expensesTracker',
   );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBp8bftqLCY6A0HWRyUC5WrVTSjnGRzvH8',
+    appId: '1:973335419103:web:352afea225589d98acb16a',
+    messagingSenderId: '973335419103',
+    projectId: 'bookapp-73219',
+    authDomain: 'bookapp-73219.firebaseapp.com',
+    databaseURL: 'https://bookapp-73219-default-rtdb.firebaseio.com',
+    storageBucket: 'bookapp-73219.appspot.com',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDG0Ys6EUEcnZwoTMNGuXbMzUZojJOVFNg',
+    appId: '1:973335419103:ios:267a32d9b6d5a23facb16a',
+    messagingSenderId: '973335419103',
+    projectId: 'bookapp-73219',
+    databaseURL: 'https://bookapp-73219-default-rtdb.firebaseio.com',
+    storageBucket: 'bookapp-73219.appspot.com',
+    androidClientId: '973335419103-om9h1ka65f0dpqvork25oianpuo2gl7e.apps.googleusercontent.com',
+    iosClientId: '973335419103-6jpr32824h5a45ad4ebol02j8l2675f5.apps.googleusercontent.com',
+    iosBundleId: 'com.example.expensesTracker',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBp8bftqLCY6A0HWRyUC5WrVTSjnGRzvH8',
+    appId: '1:973335419103:web:352afea225589d98acb16a',
+    messagingSenderId: '973335419103',
+    projectId: 'bookapp-73219',
+    authDomain: 'bookapp-73219.firebaseapp.com',
+    databaseURL: 'https://bookapp-73219-default-rtdb.firebaseio.com',
+    storageBucket: 'bookapp-73219.appspot.com',
+  );
+
 }

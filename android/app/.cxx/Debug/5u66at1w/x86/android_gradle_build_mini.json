@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/zoro/Desktop/Flutter/sdk/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/zoro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/zoro/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/Debug/5u66at1w/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/zoro/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/zoro/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/Debug/5u66at1w/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

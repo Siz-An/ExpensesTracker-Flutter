@@ -1,0 +1,2 @@
+/Users/zoro/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/Debug/5u66at1w/x86_64/CMakeFiles/edit_cache.dir
+/Users/zoro/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/Debug/5u66at1w/x86_64/CMakeFiles/rebuild_cache.dir

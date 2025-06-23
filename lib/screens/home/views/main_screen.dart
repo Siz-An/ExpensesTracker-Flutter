@@ -168,102 +168,235 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 24.0),
-        child: RefreshIndicator(
-          onRefresh: () async {
-            await _loadLimitAndCheckExpenses();
-          },
-          child: FutureBuilder(
-            future: Future.wait([
-              getUserData(),
-              getTotalAmount('income'),
-              getTotalAmount('expenses'),
-              getTransactionDetails('income'),
-              getTransactionDetails('expenses')
-            ]),
-            builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (snapshot.hasData) {
-                var userData = snapshot.data![0] as Map<String, dynamic>;
-                double incomeTotal = snapshot.data![1] as double;
-                double expenseTotal = snapshot.data![2] as double;
-                List<Map<String, dynamic>> incomeDetails = snapshot.data![3];
-                List<Map<String, dynamic>> expenseDetails = snapshot.data![4];
+    final theme = Theme.of(context);
 
-                List<Map<String, dynamic>> allDetails = [
-                  ...incomeDetails,
-                  ...expenseDetails
-                ];
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F7FB),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(90),
+        child: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF232526), Color(0xFF414345)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x22000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16),
+              child: Row(
+                children: [
+                
+                  const SizedBox(width: 10),
+                  const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 32),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Text(
+                      'Expense Tracker',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        letterSpacing: 1.2,
+                        shadows: const [
+                          Shadow(
+                            color: Colors.black26,
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Get.to(() => const LimitSetter()),
+                    icon: const Icon(Icons.notifications, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => Get.to(() => const SearchScreen()),
+                    icon: const Icon(Icons.search, color: Colors.white),
+                  ),
+                  IconButton(
+                    onPressed: () => Get.to(() => ProfileScreen()),
+                    icon: const Icon(Icons.settings, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await _loadLimitAndCheckExpenses();
+        },
+        child: FutureBuilder(
+          future: Future.wait([
+            getUserData(),
+            getTotalAmount('income'),
+            getTotalAmount('expenses'),
+            getTransactionDetails('income'),
+            getTransactionDetails('expenses')
+          ]),
+          builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (snapshot.hasData) {
+              var userData = snapshot.data![0] as Map<String, dynamic>;
+              double incomeTotal = snapshot.data![1] as double;
+              double expenseTotal = snapshot.data![2] as double;
+              List<Map<String, dynamic>> incomeDetails = snapshot.data![3];
+              List<Map<String, dynamic>> expenseDetails = snapshot.data![4];
 
-                List<Map<String, dynamic>> selectedDetails =
-                _selectedTab == 0
-                    ? allDetails
-                    : _selectedTab == 1
-                    ? incomeDetails
-                    : expenseDetails;
+              List<Map<String, dynamic>> allDetails = [
+                ...incomeDetails,
+                ...expenseDetails
+              ];
 
-                return ListView(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(Icons.person, size: 40),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Welcome,',
-                                    style:
-                                    TextStyle(color: Colors.grey.shade700)),
-                                Text(userData['username'],
-                                    style: const TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              onPressed: () => Get.to(() => const LimitSetter()),
-                              icon: const Icon(Icons.notifications),
-                            ),
-                            IconButton(
-                              onPressed: () => Get.to(() => const SearchScreen()),
-                              icon: const Icon(Icons.search),
-                            ),
-                            IconButton(
-                              onPressed: () => Get.to(() => ProfileScreen()),
-                              icon: const Icon(Icons.settings),
-                            ),
-                          ],
+              List<Map<String, dynamic>> selectedDetails =
+                  _selectedTab == 0
+                      ? allDetails
+                      : _selectedTab == 1
+                          ? incomeDetails
+                          : expenseDetails;
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFe0eafc), Color(0xFFcfdef3)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.10),
+                          blurRadius: 16,
+                          offset: const Offset(0, 8),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    BalanceCard(
-                        incomeTotal: incomeTotal, expenseTotal: expenseTotal),
-                    const SizedBox(height: 16),
-                    ExtraWidget(
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 28,
+                          backgroundColor: const Color(0xFF232526),
+                          child: Text(
+                            userData['username']?[0]?.toUpperCase() ?? '',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 18),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Welcome back,',
+                                style: TextStyle(
+                                  color: Colors.grey.shade700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              Text(
+                                userData['username'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF232526),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.08),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Limit: ₹$_currentLimit',
+                                style: const TextStyle(
+                                  color: Color(0xFF414345),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  BalanceCard(
+                    incomeTotal: incomeTotal,
+                    expenseTotal: expenseTotal,
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.07),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: ExtraWidget(
                       selectedTab: _selectedTab,
                       onTabChange: _onTabChange,
                       selectedDetails: selectedDetails,
                       deleteTransaction: deleteTransaction,
                     ),
-                  ],
-                );
-              }
-              return const SizedBox();
-            },
-          ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Add a floating action button style add button
+                ],
+              );
+            }
+            return const SizedBox();
+          },
         ),
       ),
+
     );
   }
 }

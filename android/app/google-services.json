@@ -1,64 +1,124 @@
 {
   "project_info": {
-    "project_number": "829925318048",
-    "project_id": "money-43d41",
-    "storage_bucket": "money-43d41.firebasestorage.app"
+    "project_number": "973335419103",
+    "firebase_url": "https://bookapp-73219-default-rtdb.firebaseio.com",
+    "project_id": "bookapp-73219",
+    "storage_bucket": "bookapp-73219.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:829925318048:android:81dad695b069ba2b1d98c5",
+        "mobilesdk_app_id": "1:973335419103:android:baaafe15e47b36a4acb16a",
+        "android_client_info": {
+          "package_name": "com.example.book"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "973335419103-om9h1ka65f0dpqvork25oianpuo2gl7e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.book",
+            "certificate_hash": "145ef51584b5627a0dd8aec6636f98abaf8dda8a"
+          }
+        },
+        {
+          "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASmm4ttcUVVGJdQoEJQHmMxAAqYTe3BIs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "973335419103-6jpr32824h5a45ad4ebol02j8l2675f5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.expensesTracker"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973335419103:android:6f776ded8c967714acb16a",
+        "android_client_info": {
+          "package_name": "com.example.chatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASmm4ttcUVVGJdQoEJQHmMxAAqYTe3BIs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "973335419103-6jpr32824h5a45ad4ebol02j8l2675f5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.expensesTracker"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:973335419103:android:6514416d6d698074acb16a",
         "android_client_info": {
           "package_name": "com.example.expenses_tracker"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAD8iSrz9As0uacZV_3NQfpjkCzCOvMxyI"
+          "current_key": "AIzaSyASmm4ttcUVVGJdQoEJQHmMxAAqYTe3BIs"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:829925318048:android:b11deed1a3dca5d51d98c5",
-        "android_client_info": {
-          "package_name": "com.example.flutter_expense_tracker_bloc"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAD8iSrz9As0uacZV_3NQfpjkCzCOvMxyI"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:829925318048:android:0b70839ff28b468c1d98c5",
-        "android_client_info": {
-          "package_name": "com.ss.finances_tracker_app_ss_flutter"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyAD8iSrz9As0uacZV_3NQfpjkCzCOvMxyI"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "973335419103-9tmbo5nq39bb8a5unj4duqlb3jhte9n5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "973335419103-6jpr32824h5a45ad4ebol02j8l2675f5.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.expensesTracker"
+              }
+            }
+          ]
         }
       }
     }

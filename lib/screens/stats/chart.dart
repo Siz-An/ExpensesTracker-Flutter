@@ -2,12 +2,65 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
 
 class PieChartScreen extends StatefulWidget {
   const PieChartScreen({Key? key}) : super(key: key);
 
   @override
   _PieChartScreenState createState() => _PieChartScreenState();
+}
+
+// A reusable stat chip widget for displaying income/expense summary
+class _StatChip extends StatelessWidget {
+  final String label;
+  final double value;
+  final Color color;
+  final IconData icon;
+
+  const _StatChip({
+    Key? key,
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Chip(
+      backgroundColor: color.withOpacity(0.1),
+      avatar: CircleAvatar(
+        backgroundColor: color.withOpacity(0.2),
+        child: Icon(icon, color: color, size: 20),
+      ),
+      label: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            "₹${value.toStringAsFixed(2)}",
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    );
+  }
 }
 
 class _PieChartScreenState extends State<PieChartScreen> {
@@ -70,82 +123,252 @@ class _PieChartScreenState extends State<PieChartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false, // Removes the default back button
-        title: const Text("Income vs Expense"),
-      ),
-
-      body: userId == null
-          ? const Center(child: CircularProgressIndicator())
-          : totalIncome == 0 && totalExpense == 0
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            "Income vs Expense",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 300,
-            width: 300,
-            child: PieChart(
-              PieChartData(
-                sections: _generatePieChartSections(),
-                centerSpaceRadius: 50,
-                borderData: FlBorderData(show: false),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            "Total Income: \Rs. ${totalIncome.toStringAsFixed(2)}",
-            style: const TextStyle(fontSize: 16),
-          ),
-          Text(
-            "Total Expense: \Rs. ${totalExpense.toStringAsFixed(2)}",
-            style: const TextStyle(fontSize: 16),
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: FutureBuilder(
-              future: _fetchNotes(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text("Error: ${snapshot.error}"));
-                } else if (!snapshot.hasData || (snapshot.data as List).isEmpty) {
-                  return const Center(child: Text("No notes found."));
-                }
-
-                final notes = snapshot.data as List<Map<String, dynamic>>;
-                return ListView.builder(
-                  itemCount: notes.length,
-                  itemBuilder: (context, index) {
-                    final note = notes[index];
-                    final isIncome = note['type'] == 'income';
-                    return ListTile(
-                      tileColor: isIncome ? Colors.green[50] : Colors.red[50],
-                      title: Text(
-                        note['note'],
-                        style: TextStyle(color: isIncome ? Colors.green : Colors.red),
-                      ),
-                      subtitle: Text(
-                          "Category: ${note['category']}\nAmount: \Rs. ${note['amount'].toStringAsFixed(2)}"),
-                    );
-                  },
-                );
-              },
-            ),
+      backgroundColor: theme.colorScheme.background,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(90),
+        child: Container(
+          decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF232526), Color(0xFF414345)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(28),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x22000000),
+            blurRadius: 12,
+            offset: Offset(0, 4),
           ),
         ],
-      ),
+          ),
+          child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16),
+          child: Row(
+            children: [
+          
+          const SizedBox(width: 10),
+          const Icon(Icons.account_balance_wallet_rounded, color: Colors.white, size: 32),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'OverView',
+              style: theme.textTheme.headlineMedium?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 24,
+            letterSpacing: 1.2,
+            shadows: const [
+              Shadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: Offset(0, 2),
+              ),
+            ],
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.download_rounded, color: Colors.white, size: 28),
+            tooltip: "Download PDF",
+            onPressed: () async {
+              // Show loading dialog
+              showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => const Center(child: CircularProgressIndicator()),
+              );
+              try {
+            final notes = await _fetchNotes();
+            await _generateAndDownloadPdf(context, notes);
+              } finally {
+            Navigator.of(context, rootNavigator: true).pop(); // Close loading dialog
+              }
+            },
+          ),
+            ],
+          ),
+        ),
+          ),
+        ),
+      ),body: userId == null
+          ? const Center(child: CircularProgressIndicator())
+          : totalIncome == 0 && totalExpense == 0
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.pie_chart_outline, size: 64, color: theme.colorScheme.primary.withOpacity(0.2)),
+                      const SizedBox(height: 16),
+                      Text(
+                        "No data yet",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onBackground.withOpacity(0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const CircularProgressIndicator(),
+                    ],
+                  ),
+                )
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Column(
+                    children: [
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        color: theme.colorScheme.surface,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Income vs Expense",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                height: 170, // made smaller
+                                width: 170,  // made smaller
+                                child: PieChart(
+                                  PieChartData(
+                                    sections: _generatePieChartSections(),
+                                    centerSpaceRadius: 15, // slightly smaller
+                                    borderData: FlBorderData(show: false),
+                                    sectionsSpace: 4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Expanded(
+                                    child: _StatChip(
+                                      label: "Income",
+                                      value: totalIncome,
+                                      color: Colors.green,
+                                      icon: Icons.arrow_downward_rounded,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _StatChip(
+                                      label: "Expense",
+                                      value: totalExpense,
+                                      color: Colors.red,
+                                      icon: Icons.arrow_upward_rounded,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Recent Activity",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onBackground,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: FutureBuilder(
+                          future: _fetchNotes(),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(child: CircularProgressIndicator());
+                            } else if (snapshot.hasError) {
+                              return Center(child: Text("Error: ${snapshot.error}"));
+                            } else if (!snapshot.hasData || (snapshot.data as List).isEmpty) {
+                              return Center(
+                                child: Text(
+                                  "No recent activity.",
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.colorScheme.onBackground.withOpacity(0.5),
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final notes = snapshot.data as List<Map<String, dynamic>>;
+                            notes.sort((a, b) => b['amount'].compareTo(a['amount']));
+                            return ListView.separated(
+                              itemCount: notes.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final note = notes[index];
+                                final isIncome = note['type'] == 'income';
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: isIncome
+                                        ? Colors.green.withOpacity(0.08)
+                                        : Colors.red.withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: isIncome
+                                          ? Colors.green.withOpacity(0.2)
+                                          : Colors.red.withOpacity(0.2),
+                                      child: Icon(
+                                        isIncome ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded,
+                                        color: isIncome ? Colors.green : Colors.red,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      note['note'],
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: theme.colorScheme.onBackground,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    subtitle: Text(
+                                      "Category: ${note['category']}",
+                                      style: theme.textTheme.bodySmall?.copyWith(
+                                        color: theme.colorScheme.onBackground.withOpacity(0.7),
+                                      ),
+                                    ),
+                                    trailing: Text(
+                                      "${isIncome ? '+' : '-'}₹${note['amount'].toStringAsFixed(2)}",
+                                      style: theme.textTheme.bodyLarge?.copyWith(
+                                        color: isIncome ? Colors.green : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontFeatures: const [FontFeature.tabularFigures()],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
     );
   }
-//fetch note
+
+  //fetch note
   Future<List<Map<String, dynamic>>> _fetchNotes() async {
     if (userId == null) return [];
 
@@ -212,5 +435,153 @@ class _PieChartScreenState extends State<PieChartScreen> {
         ),
       ),
     ];
+  }
+
+  // Generate a trial balance style PDF with totals inside the table
+  Future<void> _generateAndDownloadPdf(BuildContext context, List<Map<String, dynamic>> notes) async {
+    final pdf = pw.Document();
+
+    // Group by category and type for trial balance
+    final Map<String, double> incomeByCategory = {};
+    final Map<String, double> expenseByCategory = {};
+
+    for (var note in notes) {
+      if (note['type'] == 'income') {
+        incomeByCategory[note['category']] =
+            (incomeByCategory[note['category']] ?? 0) + note['amount'];
+      } else if (note['type'] == 'expense') {
+        expenseByCategory[note['category']] =
+            (expenseByCategory[note['category']] ?? 0) + note['amount'];
+      }
+    }
+
+    // Prepare trial balance rows
+    final List<List<String>> trialBalanceRows = [];
+    final allCategories = <String>{
+      ...incomeByCategory.keys,
+      ...expenseByCategory.keys,
+    };
+
+    for (final category in allCategories) {
+      final income = incomeByCategory[category] ?? 0;
+      final expense = expenseByCategory[category] ?? 0;
+      trialBalanceRows.add([
+        category,
+        income != 0 ? 'Rs.${income.toStringAsFixed(2)}' : '',
+        expense != 0 ? 'Rs.${expense.toStringAsFixed(2)}' : '',
+            ]);
+          }
+
+          // Totals
+          final totalIncomeStr = 'Rs.${totalIncome.toStringAsFixed(2)}';
+          final totalExpenseStr = 'Rs.${totalExpense.toStringAsFixed(2)}';
+
+          // Add totals as the last row in the trial balance table
+          trialBalanceRows.add([
+            'Total',
+            totalIncomeStr,
+            totalExpenseStr,
+          ]);
+
+          pdf.addPage(
+            pw.Page(
+        build: (pw.Context context) {
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text('Trial Balance', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 16),
+              pw.Table(
+          border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFBDBDBD), width: 1),
+          columnWidths: {
+            0: const pw.FlexColumnWidth(2),
+            1: const pw.FlexColumnWidth(1.2),
+            2: const pw.FlexColumnWidth(1.2),
+          },
+          children: [
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFE0E0E0)),
+              children: [
+                pw.Padding(
+            padding: const pw.EdgeInsets.all(6),
+            child: pw.Text('Category', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                ),
+                pw.Padding(
+            padding: const pw.EdgeInsets.all(6),
+            child: pw.Text('Credit (Income)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                ),
+                pw.Padding(
+            padding: const pw.EdgeInsets.all(6),
+            child: pw.Text('Debit (Expense)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                ),
+              ],
+            ),
+            ...trialBalanceRows.asMap().entries.map((entry) {
+              final i = entry.key;
+              final row = entry.value;
+              final isTotal = i == trialBalanceRows.length - 1;
+              return pw.TableRow(
+                decoration: isTotal
+              ? pw.BoxDecoration(color: PdfColor.fromInt(0xFFB3E5FC))
+              : null,
+                children: [
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(6),
+              child: pw.Text(
+                row[0],
+                style: isTotal
+              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)
+              : pw.TextStyle(fontSize: 12),
+              ),
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(6),
+              child: pw.Text(
+                row[1],
+                style: isTotal
+              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFF388E3C))
+              : pw.TextStyle(fontSize: 12),
+              ),
+            ),
+            pw.Padding(
+              padding: const pw.EdgeInsets.all(6),
+              child: pw.Text(
+                row[2],
+                style: isTotal
+              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFFD32F2F))
+              : pw.TextStyle(fontSize: 12),
+              ),
+            ),
+                ],
+              );
+            }),
+          ],
+              ),
+              pw.SizedBox(height: 24),
+              pw.Text('Recent Activity', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 8),
+              pw.Table.fromTextArray(
+          headers: ['Note', 'Amount', 'Category', 'Type'],
+          data: notes.map((note) => [
+            note['note'],
+            'Rs.${note['amount'].toStringAsFixed(2)}',
+                  note['category'],
+                  note['type'],
+                ]).toList(),
+                headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
+                cellStyle: pw.TextStyle(fontSize: 11),
+                headerDecoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFE0E0E0)),
+                cellAlignment: pw.Alignment.centerLeft,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+      name: 'trial_balance.pdf',
+    );
   }
 }
