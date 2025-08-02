@@ -1,0 +1,20 @@
+{
+  "buildFiles": [
+    "/Users/siz/Desktop/Flutter/sdk/flutter/packages/flutter_tools/gradle/src/main/groovy/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/siz/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/siz/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/RelWithDebInfo/1m5s4x6e/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/siz/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/siz/Desktop/Flutter/ExpensesTracker-Flutter/android/app/.cxx/RelWithDebInfo/1m5s4x6e/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {}
+}

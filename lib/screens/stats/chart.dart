@@ -49,7 +49,7 @@ class _StatChip extends StatelessWidget {
             ),
           ),
           Text(
-            "₹${value.toStringAsFixed(2)}",
+            "Rs.${value.toStringAsFixed(2)}",
             style: theme.textTheme.bodyLarge?.copyWith(
               color: color,
               fontWeight: FontWeight.bold,
@@ -348,7 +348,7 @@ class _PieChartScreenState extends State<PieChartScreen> {
                                       ),
                                     ),
                                     trailing: Text(
-                                      "${isIncome ? '+' : '-'}₹${note['amount'].toStringAsFixed(2)}",
+                                      "${isIncome ? '+' : '-'}Rs.${note['amount'].toStringAsFixed(2)}",
                                       style: theme.textTheme.bodyLarge?.copyWith(
                                         color: isIncome ? Colors.green : Colors.red,
                                         fontWeight: FontWeight.bold,
@@ -390,6 +390,7 @@ class _PieChartScreenState extends State<PieChartScreen> {
           'amount': (doc['amount'] as num).toDouble(),
           'category': doc['category'],
           'type': 'income',
+          'date': doc['date'], // assuming you have a date field
         });
       }
       for (var doc in expenseQuery.docs) {
@@ -398,6 +399,7 @@ class _PieChartScreenState extends State<PieChartScreen> {
           'amount': (doc['amount'] as num).toDouble(),
           'category': doc['category'],
           'type': 'expense',
+          'date': doc['date'], // assuming you have a date field
         });
       }
     } catch (e) {
@@ -437,25 +439,72 @@ class _PieChartScreenState extends State<PieChartScreen> {
     ];
   }
 
-  // Generate a trial balance style PDF with totals inside the table
+  // Generate a trial balance style PDF with totals inside the table and date
   Future<void> _generateAndDownloadPdf(BuildContext context, List<Map<String, dynamic>> notes) async {
     final pdf = pw.Document();
 
-    // Group by category and type for trial balance
-    final Map<String, double> incomeByCategory = {};
-    final Map<String, double> expenseByCategory = {};
+    // Get current date
+    final now = DateTime.now();
+    final formattedDate = "${now.day.toString().padLeft(2, '0')}-${now.month.toString().padLeft(2, '0')}-${now.year}";
+
+    // Group by category and type for trial balance, but also keep the latest date for each category/type
+    final Map<String, Map<String, dynamic>> incomeByCategory = {};
+    final Map<String, Map<String, dynamic>> expenseByCategory = {};
 
     for (var note in notes) {
-      if (note['type'] == 'income') {
-        incomeByCategory[note['category']] =
-            (incomeByCategory[note['category']] ?? 0) + note['amount'];
-      } else if (note['type'] == 'expense') {
-        expenseByCategory[note['category']] =
-            (expenseByCategory[note['category']] ?? 0) + note['amount'];
+      String category = note['category'];
+      String type = note['type'];
+      double amount = note['amount'];
+      var date = note['date'];
+
+      // Format date
+      String dateStr = '';
+      if (date != null) {
+        try {
+          if (date is Timestamp) {
+            final dt = (date as Timestamp).toDate();
+            dateStr = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+          } else if (date is DateTime) {
+            final dt = date as DateTime;
+            dateStr = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+          } else if (date is String) {
+            dateStr = date;
+          }
+        } catch (_) {
+          dateStr = date.toString();
+        }
+      }
+
+      if (type == 'income') {
+        if (!incomeByCategory.containsKey(category)) {
+          incomeByCategory[category] = {
+            'amount': amount,
+            'date': dateStr,
+          };
+        } else {
+          incomeByCategory[category]!['amount'] += amount;
+          // Keep the latest date (assuming notes are not sorted)
+          if ((incomeByCategory[category]!['date'] as String).compareTo(dateStr) < 0) {
+            incomeByCategory[category]!['date'] = dateStr;
+          }
+        }
+      } else if (type == 'expense') {
+        if (!expenseByCategory.containsKey(category)) {
+          expenseByCategory[category] = {
+            'amount': amount,
+            'date': dateStr,
+          };
+        } else {
+          expenseByCategory[category]!['amount'] += amount;
+          // Keep the latest date (assuming notes are not sorted)
+          if ((expenseByCategory[category]!['date'] as String).compareTo(dateStr) < 0) {
+            expenseByCategory[category]!['date'] = dateStr;
+          }
+        }
       }
     }
 
-    // Prepare trial balance rows
+    // Prepare trial balance rows with date
     final List<List<String>> trialBalanceRows = [];
     final allCategories = <String>{
       ...incomeByCategory.keys,
@@ -463,111 +512,163 @@ class _PieChartScreenState extends State<PieChartScreen> {
     };
 
     for (final category in allCategories) {
-      final income = incomeByCategory[category] ?? 0;
-      final expense = expenseByCategory[category] ?? 0;
+      final income = incomeByCategory[category]?['amount'] ?? 0.0;
+      final incomeDate = incomeByCategory[category]?['date'] ?? '';
+      final expense = expenseByCategory[category]?['amount'] ?? 0.0;
+      final expenseDate = expenseByCategory[category]?['date'] ?? '';
       trialBalanceRows.add([
         category,
         income != 0 ? 'Rs.${income.toStringAsFixed(2)}' : '',
+        incomeDate,
         expense != 0 ? 'Rs.${expense.toStringAsFixed(2)}' : '',
-            ]);
-          }
+        expenseDate,
+      ]);
+    }
 
-          // Totals
-          final totalIncomeStr = 'Rs.${totalIncome.toStringAsFixed(2)}';
-          final totalExpenseStr = 'Rs.${totalExpense.toStringAsFixed(2)}';
+    // Totals
+    final totalIncomeStr = 'Rs.${totalIncome.toStringAsFixed(2)}';
+    final totalExpenseStr = 'Rs.${totalExpense.toStringAsFixed(2)}';
 
-          // Add totals as the last row in the trial balance table
-          trialBalanceRows.add([
-            'Total',
-            totalIncomeStr,
-            totalExpenseStr,
-          ]);
+    // Add totals as the last row in the trial balance table
+    trialBalanceRows.add([
+      'Total',
+      totalIncomeStr,
+      '',
+      totalExpenseStr,
+      '',
+    ]);
 
-          pdf.addPage(
-            pw.Page(
+    pdf.addPage(
+      pw.Page(
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text('Trial Balance', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              pw.SizedBox(height: 4),
+              pw.Text('Date: $formattedDate', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.normal)),
               pw.SizedBox(height: 16),
               pw.Table(
-          border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFBDBDBD), width: 1),
-          columnWidths: {
-            0: const pw.FlexColumnWidth(2),
-            1: const pw.FlexColumnWidth(1.2),
-            2: const pw.FlexColumnWidth(1.2),
-          },
-          children: [
-            pw.TableRow(
-              decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFE0E0E0)),
-              children: [
-                pw.Padding(
-            padding: const pw.EdgeInsets.all(6),
-            child: pw.Text('Category', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                ),
-                pw.Padding(
-            padding: const pw.EdgeInsets.all(6),
-            child: pw.Text('Credit (Income)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                ),
-                pw.Padding(
-            padding: const pw.EdgeInsets.all(6),
-            child: pw.Text('Debit (Expense)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
-                ),
-              ],
-            ),
-            ...trialBalanceRows.asMap().entries.map((entry) {
-              final i = entry.key;
-              final row = entry.value;
-              final isTotal = i == trialBalanceRows.length - 1;
-              return pw.TableRow(
-                decoration: isTotal
-              ? pw.BoxDecoration(color: PdfColor.fromInt(0xFFB3E5FC))
-              : null,
+                border: pw.TableBorder.all(color: PdfColor.fromInt(0xFFBDBDBD), width: 1),
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(2),
+                  1: const pw.FlexColumnWidth(1.2),
+                  2: const pw.FlexColumnWidth(1.2),
+                  3: const pw.FlexColumnWidth(1.2),
+                  4: const pw.FlexColumnWidth(1.2),
+                },
                 children: [
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(6),
-              child: pw.Text(
-                row[0],
-                style: isTotal
-              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)
-              : pw.TextStyle(fontSize: 12),
-              ),
-            ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(6),
-              child: pw.Text(
-                row[1],
-                style: isTotal
-              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFF388E3C))
-              : pw.TextStyle(fontSize: 12),
-              ),
-            ),
-            pw.Padding(
-              padding: const pw.EdgeInsets.all(6),
-              child: pw.Text(
-                row[2],
-                style: isTotal
-              ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFFD32F2F))
-              : pw.TextStyle(fontSize: 12),
-              ),
-            ),
+                  pw.TableRow(
+                    decoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFE0E0E0)),
+                    children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Category', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Credit (Income)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Income Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Debit (Expense)', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(6),
+                        child: pw.Text('Expense Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14)),
+                      ),
+                    ],
+                  ),
+                  ...trialBalanceRows.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final row = entry.value;
+                    final isTotal = i == trialBalanceRows.length - 1;
+                    return pw.TableRow(
+                      decoration: isTotal
+                          ? pw.BoxDecoration(color: PdfColor.fromInt(0xFFB3E5FC))
+                          : null,
+                      children: [
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            row[0],
+                            style: isTotal
+                                ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13)
+                                : pw.TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            row[1],
+                            style: isTotal
+                                ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFF388E3C))
+                                : pw.TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            row[2],
+                            style: pw.TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            row[3],
+                            style: isTotal
+                                ? pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13, color: PdfColor.fromInt(0xFFD32F2F))
+                                : pw.TextStyle(fontSize: 12),
+                          ),
+                        ),
+                        pw.Padding(
+                          padding: const pw.EdgeInsets.all(6),
+                          child: pw.Text(
+                            row[4],
+                            style: pw.TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
                 ],
-              );
-            }),
-          ],
               ),
               pw.SizedBox(height: 24),
               pw.Text('Recent Activity', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
               pw.SizedBox(height: 8),
               pw.Table.fromTextArray(
-          headers: ['Note', 'Amount', 'Category', 'Type'],
-          data: notes.map((note) => [
-            note['note'],
-            'Rs.${note['amount'].toStringAsFixed(2)}',
-                  note['category'],
-                  note['type'],
-                ]).toList(),
+                headers: ['Note', 'Amount', 'Category', 'Type', 'Date'],
+                data: notes.map((note) {
+                  String dateStr = '';
+                  if (note['date'] != null) {
+                    try {
+                      // If Firestore Timestamp
+                      if (note['date'] is Timestamp) {
+                        final dt = (note['date'] as Timestamp).toDate();
+                        dateStr = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+                      } else if (note['date'] is DateTime) {
+                        final dt = note['date'] as DateTime;
+                        dateStr = "${dt.day.toString().padLeft(2, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.year}";
+                      } else if (note['date'] is String) {
+                        dateStr = note['date'];
+                      }
+                    } catch (_) {
+                      dateStr = note['date'].toString();
+                    }
+                  }
+                  return [
+                    note['note'],
+                    'Rs.${note['amount'].toStringAsFixed(2)}',
+                    note['category'],
+                    note['type'],
+                    dateStr,
+                  ];
+                }).toList(),
                 headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 12),
                 cellStyle: pw.TextStyle(fontSize: 11),
                 headerDecoration: pw.BoxDecoration(color: PdfColor.fromInt(0xFFE0E0E0)),
@@ -581,7 +682,7 @@ class _PieChartScreenState extends State<PieChartScreen> {
 
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => pdf.save(),
-      name: 'trial_balance.pdf',
+      name: 'trial_balance_$formattedDate.pdf',
     );
   }
 }

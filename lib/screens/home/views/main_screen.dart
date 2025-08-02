@@ -350,7 +350,7 @@ class _MainScreenState extends State<MainScreen> {
                               const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
                               const SizedBox(width: 6),
                               Text(
-                                'Limit: ₹$_currentLimit',
+                                'Limit: Rs.$_currentLimit',
                                 style: const TextStyle(
                                   color: Color(0xFF414345),
                                   fontWeight: FontWeight.w600,
