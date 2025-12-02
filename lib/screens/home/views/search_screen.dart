@@ -370,18 +370,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
 // Select End Date
   Future<void> _selectEndDate(BuildContext context) async {
-    if (_startDate == null) {
-      // Show a warning or handle the case where start date is not selected
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a start date first.')),
-      );
-      return;
-    }
-
+    DateTime initialDate = _startDate ?? DateTime.now();
+    
     DateTime? selectedDate = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: _startDate!, // Ensure end date is not earlier than the start date
+      initialDate: initialDate,
+      firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
 
@@ -409,44 +403,48 @@ class _SearchScreenState extends State<SearchScreen> {
         return;
       }
 
-      // Convert the selected dates to match the Firestore format
-      String startDateString = DateFormat('yyyy/MM/dd').format(_startDate!);
-      String endDateString = DateFormat('yyyy/MM/dd').format(_endDate!);
-
-      print("Start Date (Formatted): $startDateString");
-      print("End Date (Formatted): $endDateString");
-
       String collectionName = _selectedType == 'Expenses' ? 'expenses' : 'income';
 
-      // To avoid Firestore composite index error, orderBy must be before where on the same field
+      // Simplified query without composite index requirement
       Query query = FirebaseFirestore.instance
           .collection(collectionName)
-          .where('userId', isEqualTo: user.uid)
-          .orderBy('date') // orderBy first
-          .where('date', isGreaterThanOrEqualTo: startDateString)
-          .where('date', isLessThanOrEqualTo: endDateString);
+          .where('userId', isEqualTo: user.uid);
 
       QuerySnapshot snapshot = await query.get();
 
-      print("Found ${snapshot.docs.length} documents in $collectionName");
-
-      if (snapshot.docs.isEmpty) {
-        print("No data found.");
+      // Filter results client-side based on date range
+      List<Map<String, dynamic>> entries = [];
+      
+      for (var doc in snapshot.docs) {
+        try {
+          String dateString = doc['date'];
+          DateTime docDate = DateFormat('yyyy/MM/dd').parse(dateString);
+          
+          // Check if document date is within selected range
+          if ((docDate.isAfter(_startDate!.subtract(const Duration(days: 1))) || 
+               docDate.isAtSameMomentAs(_startDate!)) &&
+              (docDate.isBefore(_endDate!.add(const Duration(days: 1))) || 
+               docDate.isAtSameMomentAs(_endDate!))) {
+            
+            entries.add({
+              'amount': doc['amount'],
+              'note': doc['note'],
+              'date': docDate,
+            });
+          }
+        } catch (dateError) {
+          print("Error parsing date for document ${doc.id}: $dateError");
+        }
       }
 
-      List<Map<String, dynamic>> entries = snapshot.docs.map((doc) {
-        String dateString = doc['date'];
-        DateTime date = DateFormat('yyyy/MM/dd').parse(dateString);
-        return {
-          'amount': doc['amount'],
-          'note': doc['note'],
-          'date': date,
-        };
-      }).toList();
+      // Sort entries by date
+      entries.sort((a, b) => (b['date'] as DateTime).compareTo(a['date'] as DateTime));
 
       setState(() {
         _filteredEntries = entries;
       });
+
+      print("Found ${entries.length} documents in $collectionName within date range");
     } catch (e) {
       print("Error during query: $e");
       ScaffoldMessenger.of(context).showSnackBar(

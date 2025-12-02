@@ -85,7 +85,16 @@ class _MainScreenState extends State<MainScreen> {
     }
     DocumentSnapshot userDoc =
     await FirebaseFirestore.instance.collection('Users').doc(userId).get();
-    return userDoc.data() as Map<String, dynamic>;
+    // Fix: Check if document exists before casting
+    if (userDoc.exists) {
+      return userDoc.data() as Map<String, dynamic>;
+    } else {
+      // Return empty map or default user data if document doesn't exist
+      return {
+        'username': 'User',
+        // Add other default fields as needed
+      };
+    }
   }
 
   Future<List<Map<String, dynamic>>> getTransactionDetails(String collection) async {
@@ -345,18 +354,68 @@ class _MainScreenState extends State<MainScreen> {
                               ),
                             ],
                           ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
-                              const SizedBox(width: 6),
-                              Text(
-                                'Limit: Rs.$_currentLimit',
-                                style: const TextStyle(
-                                  color: Color(0xFF414345),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
+                          child: FutureBuilder<DocumentSnapshot>(
+                            future: _currentLimit > 0 
+                                ? null 
+                                : FirebaseFirestore.instance.collection('category_limits').doc(FirebaseAuth.instance.currentUser?.uid).get(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return Row(
+                                  children: const [
+                                    Icon(Icons.flag, color: Color(0xFF414345), size: 20),
+                                    SizedBox(width: 6),
+                                    Text(
+                                      'Loading...',
+                                      style: TextStyle(
+                                        color: Color(0xFF414345),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                              
+                              if (snapshot.hasData && snapshot.data!.exists) {
+                                Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
+                                int totalCategoryLimit = 0;
+                                
+                                // Calculate total of all category limits
+                                data.forEach((key, value) {
+                                  if (value is int) {
+                                    totalCategoryLimit += value;
+                                  }
+                                });
+                                
+                                return Row(
+                                  children: [
+                                    const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Total Limit: Rs.$totalCategoryLimit',
+                                      style: const TextStyle(
+                                        color: Color(0xFF414345),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+                              
+                              // Fallback to current limit if no category limits found
+                              return Row(
+                                children: [
+                                  const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Total Limit: Rs.$_currentLimit',
+                                    style: const TextStyle(
+                                      color: Color(0xFF414345),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
                           ),
                         ),
                       ],

@@ -10,10 +10,24 @@ class LimitSetter extends StatefulWidget {
 }
 
 class _LimitSetterState extends State<LimitSetter> {
-  final TextEditingController _limitController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
+  
   String? userId;
+  
+  // Category-wise limits storage
+  Map<String, TextEditingController> _categoryControllers = {};
+  final List<String> _expenseCategories = [
+    'Food & Dining',
+    'Transport',
+    'Housing',
+    'Entertainment',
+    'Health & Fitness',
+    'Shopping',
+    'Education',
+    'Bills & Subscriptions',
+    'Savings & Investments',
+    'Miscellaneous'
+  ];
 
   @override
   void initState() {
@@ -28,7 +42,7 @@ class _LimitSetterState extends State<LimitSetter> {
         setState(() {
           userId = user.uid;
         });
-        _loadLimit();
+        _loadCategoryLimits();
       } else {
         // Handle the case when no user is logged in
         ScaffoldMessenger.of(context).showSnackBar(
@@ -42,44 +56,61 @@ class _LimitSetterState extends State<LimitSetter> {
     }
   }
 
-  Future<void> _loadLimit() async {
+  Future<void> _loadCategoryLimits() async {
     if (userId == null) return;
     try {
       DocumentSnapshot snapshot =
-      await _firestore.collection('limits').doc(userId).get();
+          await _firestore.collection('category_limits').doc(userId).get();
 
       if (snapshot.exists && snapshot.data() != null) {
         Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
-        int limit = data['expense_limit'] ?? 0;
-
+        
         setState(() {
-          _limitController.text = limit.toString();
+          // Initialize controllers for each category
+          for (String category in _expenseCategories) {
+            int limit = data[category] ?? 0;
+            _categoryControllers[category] = TextEditingController(text: limit.toString());
+          }
+        });
+      } else {
+        // Initialize with empty controllers if no data exists
+        setState(() {
+          for (String category in _expenseCategories) {
+            _categoryControllers[category] = TextEditingController(text: '0');
+          }
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load limit: $e')),
+        SnackBar(content: Text('Failed to load limits: $e')),
       );
     }
   }
-//limit module
-  Future<void> _saveLimit() async {
+
+  Future<void> _saveCategoryLimits() async {
     if (userId == null) return;
-    int? newLimit = int.tryParse(_limitController.text);
-    if (newLimit != null) {
-      try {
-        await _firestore.collection('limits').doc(userId).set(
-          {'expense_limit': newLimit},
-          SetOptions(merge: true),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense limit updated successfully!')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update limit: $e')),
-        );
-      }
+    
+    try {
+      Map<String, int> limits = {};
+      
+      // Collect limits from all controllers
+      _categoryControllers.forEach((category, controller) {
+        int? limit = int.tryParse(controller.text) ?? 0;
+        limits[category] = limit;
+      });
+      
+      await _firestore.collection('category_limits').doc(userId).set(
+        limits,
+        SetOptions(merge: true),
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Category limits updated successfully!')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update limits: $e')),
+      );
     }
   }
 
@@ -123,7 +154,7 @@ class _LimitSetterState extends State<LimitSetter> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      'Expense Limit',
+                      'Category Limits',
                       style: theme.textTheme.headlineMedium?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -149,91 +180,217 @@ class _LimitSetterState extends State<LimitSetter> {
       body: SingleChildScrollView(
         child: Container(
           padding: const EdgeInsets.all(24),
-          margin: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 8), // increased top margin
+          margin: const EdgeInsets.only(top: 30, left: 16, right: 16, bottom: 16),
           decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(32),
-        boxShadow: [
-          BoxShadow(
-            color: theme.shadowColor.withOpacity(0.10),
-            blurRadius: 28,
-            offset: const Offset(0, 10),
-          ),
-        ],
-          ),
-          child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.account_balance_wallet_rounded,
-            size: 56,
-            color: theme.colorScheme.primary.withOpacity(0.85),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Set Your Monthly Limit",
-            style: theme.textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          fontSize: 22,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            "Stay on track by setting a monthly expense limit.",
-            style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
-          fontSize: 15,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _limitController,
-            decoration: InputDecoration(
-          labelText: 'Expense Limit',
-          prefixText: 'Rs. ',
-          filled: true,
-          fillColor: theme.colorScheme.surface.withOpacity(0.95),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: BorderSide.none,
-          ),
-            ),
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-          onPressed: _saveLimit,
-          style: ElevatedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            backgroundColor: theme.colorScheme.primary,
-            foregroundColor: theme.colorScheme.onPrimary,
-            elevation: 3,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.save_rounded, size: 22),
-              SizedBox(width: 8),
-              Text(
-            'Save Limit',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: theme.shadowColor.withOpacity(0.10),
+                blurRadius: 28,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-            ),
-          ),
-        ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.category_rounded,
+                size: 56,
+                color: theme.colorScheme.primary.withOpacity(0.85),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                "Set Category-wise Limits",
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Set spending limits for each expense category.",
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withOpacity(0.7),
+                  fontSize: 15,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              
+              // Category limit inputs with improved UI
+              Container(
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.outline.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // Header row
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withOpacity(0.1),
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Category',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              'Limit (Rs.)',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Category rows
+                    ..._expenseCategories.map((category) {
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: theme.dividerColor.withOpacity(0.3),
+                              width: 0.5,
+                            ),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  category,
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                flex: 2,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                                  child: TextField(
+                                    controller: _categoryControllers[category],
+                                    decoration: InputDecoration(
+                                      prefixText: 'Rs. ',
+                                      prefixStyle: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(
+                                          color: theme.colorScheme.outline.withOpacity(0.5),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(
+                                          color: theme.colorScheme.outline.withOpacity(0.5),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                        borderSide: BorderSide(
+                                          color: theme.colorScheme.primary,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 14,
+                                      ),
+                                    ),
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _saveCategoryLimits,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    elevation: 3,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.save_rounded, size: 24),
+                      SizedBox(width: 10),
+                      Text(
+                        'Save Category Limits',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Enter 0 for no limit on a category',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         ),
-      ),);
+      ),
+    );
+  }
+  
+  @override
+  void dispose() {
+    // Dispose all controllers
+    _categoryControllers.values.forEach((controller) => controller.dispose());
+    super.dispose();
   }
 }
