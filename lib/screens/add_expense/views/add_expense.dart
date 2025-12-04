@@ -68,7 +68,7 @@ class _AddExpenseState extends State<AddExpense> {
         'note': note,
         'date': date,
         'category': category,
-        'createdAt': FieldValue.serverTimestamp(),
+        'createdAt': selectDate, // Use the actual selected date instead of server timestamp
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import '../../stats/card.dart';
 import '../../stats/extra_widget.dart';
 import '../../stats/limitsetter.dart';
+import '../../stats/future_stats.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -425,6 +426,7 @@ class _MainScreenState extends State<MainScreen> {
                   BalanceCard(
                     incomeTotal: incomeTotal,
                     expenseTotal: expenseTotal,
+                    expenseHistory: expenseDetails, // Pass expense history data
                   ),
                   const SizedBox(height: 20),
                   Container(
@@ -448,6 +450,34 @@ class _MainScreenState extends State<MainScreen> {
                   ),
                   const SizedBox(height: 24),
                   // Add a floating action button style add button
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Navigate to Future Stats screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FutureStatsScreen(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF232526),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                      child: const Text(
+                        'See Future Stats',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             }
