@@ -357,10 +357,16 @@ class _AddExpenseState extends State<AddExpense> {
                           ],
                           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                           decoration: InputDecoration(
-                            prefixIcon: Icon(
-                              Icons.attach_money_rounded,
-                              color: selectedType == 'Expenses' ? Colors.redAccent : Colors.green,
-                              size: 28,
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Text(
+                                'Rs.',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: selectedType == 'Expenses' ? Colors.redAccent : Colors.green,
+                                ),
+                              ),
                             ),
                             labelText: 'Amount',
                             labelStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
