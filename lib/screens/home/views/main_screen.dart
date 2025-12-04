@@ -52,6 +52,9 @@ class _MainScreenState extends State<MainScreen> {
               context, 'Total Expenses', totalExpenses.toInt());
         }
       }
+      
+      // Check category-wise limits
+      await _checkCategoryLimits(userId);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading limit or expenses: $e')),
@@ -143,6 +146,56 @@ class _MainScreenState extends State<MainScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to delete transaction: $e')),
       );
+    }
+  }
+
+  /// Check if any category limits have been exceeded
+  Future<void> _checkCategoryLimits(String userId) async {
+    try {
+      // Get category limits
+      DocumentSnapshot categoryLimitsSnapshot = await FirebaseFirestore.instance
+          .collection('category_limits')
+          .doc(userId)
+          .get();
+
+      if (!categoryLimitsSnapshot.exists) return;
+
+      Map<String, dynamic> categoryLimits =
+          categoryLimitsSnapshot.data() as Map<String, dynamic>;
+
+      // Get all expense transactions
+      QuerySnapshot expenseSnapshot = await FirebaseFirestore.instance
+          .collection('expenses')
+          .where('userId', isEqualTo: userId)
+          .get();
+
+      // Group expenses by category and calculate totals
+      Map<String, double> categoryTotals = {};
+      for (var doc in expenseSnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        String category = data['category'] ?? 'Unknown';
+        double amount = (data['amount'] ?? 0).toDouble();
+
+        if (categoryTotals.containsKey(category)) {
+          categoryTotals[category] = categoryTotals[category]! + amount;
+        } else {
+          categoryTotals[category] = amount;
+        }
+      }
+
+      // Check if any category exceeds its limit
+      categoryLimits.forEach((category, limitObj) {
+        int limit = limitObj is int ? limitObj : 0;
+        double categoryTotal = categoryTotals[category] ?? 0;
+
+        if (limit > 0 && categoryTotal > limit) {
+          // Show category limit exceeded popup
+          CategoryLimitExceededPopup.show(context, category, categoryTotal, limit);
+        }
+      });
+    } catch (e) {
+      // Silently handle errors to avoid disrupting the UI
+      print('Error checking category limits: $e');
     }
   }
 
