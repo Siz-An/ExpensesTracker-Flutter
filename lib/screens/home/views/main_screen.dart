@@ -323,30 +323,35 @@ class _MainScreenState extends State<MainScreen> {
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 'Welcome back,',
                                 style: TextStyle(
-                                  color: Colors.grey.shade700,
-                                  fontSize: 15,
+                                  color: Colors.grey.shade600,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.2,
                                 ),
                               ),
                               Text(
                                 userData['username'] ?? '',
                                 style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                   color: Color(0xFF232526),
+                                  height: 1.3,
                                 ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(20),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.08),
@@ -361,15 +366,26 @@ class _MainScreenState extends State<MainScreen> {
                                 : FirebaseFirestore.instance.collection('category_limits').doc(FirebaseAuth.instance.currentUser?.uid).get(),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState == ConnectionState.waiting) {
-                                return Row(
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: const [
-                                    Icon(Icons.flag, color: Color(0xFF414345), size: 20),
-                                    SizedBox(width: 6),
+                                    Icon(Icons.flag, color: Color(0xFF414345), size: 18),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Total Limit:',
+                                      style: TextStyle(
+                                        color: Color(0xFF414345),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
                                     Text(
                                       'Loading...',
                                       style: TextStyle(
                                         color: Color(0xFF414345),
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
                                     ),
                                   ],
@@ -387,15 +403,26 @@ class _MainScreenState extends State<MainScreen> {
                                   }
                                 });
                                 
-                                return Row(
+                                return Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Total Limit: Rs.$totalCategoryLimit',
-                                      style: const TextStyle(
+                                    const Icon(Icons.flag, color: Color(0xFF414345), size: 18),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Total Limit:',
+                                      style: TextStyle(
                                         color: Color(0xFF414345),
                                         fontWeight: FontWeight.w600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rs.$totalCategoryLimit',
+                                      style: const TextStyle(
+                                        color: Color(0xFF414345),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
                                     ),
                                   ],
@@ -403,15 +430,26 @@ class _MainScreenState extends State<MainScreen> {
                               }
                               
                               // Fallback to current limit if no category limits found
-                              return Row(
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Icon(Icons.flag, color: Color(0xFF414345), size: 20),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Total Limit: Rs.$_currentLimit',
-                                    style: const TextStyle(
+                                  const Icon(Icons.flag, color: Color(0xFF414345), size: 18),
+                                  const SizedBox(height: 4),
+                                  const Text(
+                                    'Total Limit:',
+                                    style: TextStyle(
                                       color: Color(0xFF414345),
                                       fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rs.$_currentLimit',
+                                    style: const TextStyle(
+                                      color: Color(0xFF414345),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
                                     ),
                                   ),
                                 ],
